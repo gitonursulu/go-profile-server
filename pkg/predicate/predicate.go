@@ -1,5 +1,8 @@
-// pkg/predicate/predicate.go
 package predicate
+
+import (
+	"fmt"
+)
 
 type PredicateNode struct {
 	Operator string
@@ -7,27 +10,66 @@ type PredicateNode struct {
 	Right    Expression
 }
 
+type ValueSpec int
+
+const (
+	Other  ValueSpec = iota // 0
+	Column                  // 1
+)
+
 type ValueNode struct {
-	Value interface{}
+	Value     interface{}
+	ValueSpec ValueSpec
 }
 
 type Expression interface {
-	Evaluate() bool
+	Evaluate() string
 }
 
-func (p *PredicateNode) Evaluate() bool {
+func (p *PredicateNode) Evaluate() string {
 	switch p.Operator {
 	case "AND":
-		return p.Left.Evaluate() && p.Right.Evaluate()
+		left := p.Left.Evaluate()
+		right := p.Right.Evaluate()
+		return fmt.Sprintf("(%s AND %s)", left, right)
 	case "OR":
-		return p.Left.Evaluate() || p.Right.Evaluate()
+		left := p.Left.Evaluate()
+		right := p.Right.Evaluate()
+		return fmt.Sprintf("(%s OR %s)", left, right)
 	case "NOT":
-		return !p.Right.Evaluate()
+		if p.Left != nil {
+			panic("aallaaaaah")
+		}
+		right := p.Right.Evaluate()
+		return fmt.Sprintf("(NOT %s)", right)
+	case ">":
+		left := p.Left.Evaluate()
+		right := p.Right.Evaluate()
+		return fmt.Sprintf("(%s > %s)", left, right)
+	case "<":
+		left := p.Left.Evaluate()
+		right := p.Right.Evaluate()
+		return fmt.Sprintf("(%s < %s)", left, right)
+	case "=":
+		left := p.Left.Evaluate()
+		right := p.Right.Evaluate()
+		return fmt.Sprintf("(%s = %s)", left, right)
 	default:
 		panic("Geçersiz koşul operatörü: " + p.Operator)
 	}
 }
 
-func (v *ValueNode) Evaluate() bool {
-	return v.Value.(bool)
+func (v *ValueNode) Evaluate() string {
+	valueSpec := v.ValueSpec
+	switch value := v.Value.(type) {
+	case string:
+		if valueSpec == Column {
+			return fmt.Sprintf("%s", value)
+		}
+		return fmt.Sprintf("'%s'", value)
+	case int, int64, float32, float64, bool:
+		return fmt.Sprintf("%v", value)
+	default:
+		panic("Geçersiz değer türü: " + fmt.Sprintf("%T", value))
+	}
 }

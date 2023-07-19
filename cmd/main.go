@@ -2,20 +2,40 @@ package main
 
 import (
 	"fmt"
+	"profile/pkg/predicate"
 )
 
 func main() {
-	//left := &predicate.ValueNode{Value: true}
-	//right := &predicate.ValueNode{Value: false}
+	// ((true AND false) OR (true AND NOT false)) AND (true OR false)
+	expressionTree := &predicate.PredicateNode{
+		Operator: "AND",
+		Left: &predicate.PredicateNode{
+			Operator: "OR",
+			Left: &predicate.PredicateNode{
+				Operator: ">",
+				Left:     &predicate.ValueNode{Value: "age", ValueSpec: predicate.Column},
+				Right:    &predicate.ValueNode{Value: 20},
+			},
+			Right: &predicate.PredicateNode{
+				Operator: "AND",
+				Left:     &predicate.ValueNode{Value: true},
+				Right: &predicate.PredicateNode{
+					Operator: "=",
+					Left:     &predicate.ValueNode{Value: "name", ValueSpec: predicate.Column},
+					Right:    &predicate.ValueNode{Value: "onur"},
+				},
+			},
+		},
+		Right: &predicate.PredicateNode{
+			Operator: "OR",
+			Left:     &predicate.ValueNode{Value: true},
+			Right:    &predicate.ValueNode{Value: false},
+		},
+	}
 
-	//expressionTree := &predicate.PredicateNode{
-	//	Operator: "AND",
-	//	Left:     left,
-	//	Right:    right,
-	//}
+	result := expressionTree.Evaluate()
 
-	//result := expressionTree.Evaluate()
-	fmt.Println("Sonuç:")
+	fmt.Println("Sonuç:", result)
 
 	// e := echo.New()
 
